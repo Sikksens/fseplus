@@ -502,28 +502,47 @@ function getAssignmentText(row, index) {
   var page = path[path.length - 1];
 
   if (page.indexOf("airport.jsp") === 0) {
-    var icao = document.querySelector(".airportInfo h1").innerText;
-    var imgs = document.querySelectorAll("img");
-    imgs.forEach(function (img) {
-      if ((img.src || "").indexOf("fscharts.gif") !== -1) {
-        img.src =
-          "https://navigraph.com/assets/images/navigraph_logo_inverted.svg";
-        img.classList.add("img-navigraph");
-        img.parentElement.href = "https://charts.navigraph.com/airport/" + icao;
-      }
-      if ((img.src || "").indexOf("gcmap.com") !== -1) {
-        var iframe = document.createElement("iframe");
-        iframe.src =
-          "https://maps.google.com/maps?q=" +
-          icao +
-          "+Airport&t=&z=13&ie=UTF8&iwloc=&output=embed";
-        iframe.width = "230px";
-        iframe.height = "230px";
-        iframe.style.border = "none";
-        img.parentNode.appendChild(iframe);
-        img.remove();
-      }
-    });
+    var icao = document.querySelector(".airportInfo h1").innerText.trim();
+
+    var gcMapBtn = document.querySelector('a[href*="gcmap.com/airport/"]');
+
+    if (gcMapBtn) {
+        var chartfoxBtn = document.createElement("a");
+        chartfoxBtn.href = `https://chartfox.org/${icao}`;
+        chartfoxBtn.className = "btn btn-xs btn-primary";
+        chartfoxBtn.target = "_blank";
+        chartfoxBtn.style.marginLeft = "5px";
+        chartfoxBtn.style.color = "#fff";
+		chartfoxBtn.style.display = "inline-flex";
+		chartfoxBtn.style.alignItems = "center";
+        chartfoxBtn.innerHTML = `
+            <img src="https://chartfox.org/favicon.ico" 
+                 style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+            Chartfox
+        `;
+
+        var metarBtn = document.createElement("a");
+        metarBtn.href = `https://metar.cloud/airport/${icao}`;
+        metarBtn.className = "btn btn-xs btn-primary";
+        metarBtn.target = "_blank";
+        metarBtn.style.marginLeft = "5px";
+        metarBtn.style.color = "#fff";
+		metarBtn.style.display = "inline-flex";
+        metarBtn.style.alignItems = "center";
+        metarBtn.innerHTML = `
+            <img src="https://metar.cloud/favicon.ico" 
+                 style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+            METAR
+        `;
+
+      gcMapBtn.before(chartfoxBtn);
+      chartfoxBtn.after(metarBtn);
+	  
+	  var oldPageBtn = document.querySelector('a[href*="airportOriginal.jsp"]');
+        if (oldPageBtn) {
+            oldPageBtn.style.display = "none";
+        }
+    }
     var aircraft = document.querySelectorAll(".aircraftTable tbody tr");
     aircraft.forEach(function (ac) {
       var actext = ac.childNodes[3].innerText;
