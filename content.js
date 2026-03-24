@@ -588,20 +588,19 @@ function getAssignmentText(row, index) {
       }
     });
   } else if (page.indexOf("myflight.jsp") === 0) {
-    var actions = document.querySelector(".assignments-actions");
 
-    var assignments = document.querySelectorAll(
-      ".myflight-assignments--ready .assignmentTable tbody tr"
-    );
-    var orig = "";
-    var dest = "";
-    var regelement = document.querySelector(".myflight-aircraft--model a");
-    var reg = regelement ? regelement.innerText : "";
-    var aircraftelement = document.querySelector(
-      ".myflight-aircraft--model h3"
-    );
-    var pax = 0;
-    var cargo = 0;
+    var actionsDiv = document.querySelector(".assignments-actions");
+
+    if (actionsDiv) {
+
+      var currentAirportLink = document.querySelector(".myflight-status h2 a");
+      var orig = currentAirportLink ? currentAirportLink.innerText.trim() : "";
+
+      var regElement = document.querySelector(".myflight-aircraft--model a");
+      var reg = regElement ? regElement.innerText.trim() : "";
+
+      var modelElement = document.querySelector(".myflight-aircraft--model h3");
+      var modelName = modelElement ? modelElement.innerText.trim() : "";
 
     var airframes = {
       "Aermacchi - Lockheed AL-60": "AL60",
@@ -1000,64 +999,74 @@ function getAssignmentText(row, index) {
       "Zlin Z-43": "",
     };
 
-    var basetype = aircraftelement ? airframes[aircraftelement.innerText] : "";
+    var aircraftType = airframes[modelName] || "";
 
-    assignments.forEach(function (assignment) {
-      orig = getAssignmentText(assignment, 7);
-      dest = getAssignmentText(assignment, 9);
-      var passengers = getAssignmentText(assignment, 15);
-      if (passengers.indexOf("kg") !== passengers.length - 2) {
-        pax += +passengers.split(" ")[0];
-      } else {
-        var cargoarr = passengers.split(" ");
-        cargo = +cargoarr[cargoarr.length - 1].replace("kg", "");
-      }
-    });
+	var assignments = document.querySelectorAll(".myflight-assignments--ready .assignmentTable tbody tr");
+    var dest = "";
+    var totalCargo = 0;
+    var totalPax = 0;
 
-    var params = [];
-    params.push("orig=" + orig);
-    params.push("dest=" + dest);
-    params.push("reg=" + reg);
-    params.push("basetype=" + basetype);
-    params.push("pax=" + pax);
-    params.push("cargo=" + cargo);
+    assignments.forEach(function (row) {
+        if (row.cells.length < 8) return;
+
+        var destCell = row.cells[4];
+        if (destCell && !dest) {
+          var destLink = destCell.querySelector("a");
+          if (destLink) dest = destLink.innerText.trim();
+        }
+
+        var cargoCell = row.cells[7];
+        if (cargoCell) {
+          var text = cargoCell.innerText.trim();
+          if (text.includes("kg")) {
+            var match = text.match(/(\d+)/);
+            if (match) totalCargo += parseInt(match[1]);
+          } else if (/\d+\s*(pax|passenger)/i.test(text)) {
+            var match = text.match(/(\d+)/);
+            if (match) totalPax += parseInt(match[1]);
+          }
+        }
+      });
+
+    var params = new URLSearchParams();
+      if (orig) params.append("orig", orig);
+      if (dest) params.append("dest", dest);
+      if (aircraftType) params.append("type", aircraftType);
+      if (reg) params.append("reg", reg);
+      if (totalPax > 0) params.append("pax", totalPax);
+      if (totalCargo > 0) params.append("cargo", totalCargo);
+
+    var simbriefUrl = "https://dispatch.simbrief.com/options/custom?" + params.toString();
 
     var btn = document.createElement("a");
-    btn.href = "https://dispatch.simbrief.com/options/new?" + params.join("&");
-    btn.target = "_blank";
-    btn.innerHTML =
-      "<img src='https://dispatch.simbrief.com/img/logo-papers.749a29af39b0.png' width='15px' /> SimBrief Dispatch";
-    btn.classList.add("btn");
-    btn.classList.add("btn-simbrief");
-    actions.appendChild(btn);
-  } else if (
-    page.indexOf("new") === 0 &&
-    path.indexOf("dispatch.simbrief.com") !== -1
-  ) {
-    var params = [];
-    loadParams(params);
-    setTimeout(function () {
-      updateSimBriefValue("pounds", 0);
-      updateSimBriefValue("orig", params.orig || "");
-      updateSimBriefValue("dest", params.dest || "");
-      triggerChange("dest");
-      updateSimBriefValue("basetype", params.basetype || "");
-      triggerChange("basetype", "change");
-      updateSimBriefValue("reg", params.reg || "");
-      updateSimBriefValue("callsign", (params.reg || "").replace("-", ""));
-      triggerChange("reg");
-      updateSimBriefValue("pax", params.pax || "");
-      triggerChange("pax");
-      updateSimBriefValue("cargo", params.cargo || "");
-      triggerChange("cargo");
-      var aframes = document.getElementById("type");
-      if (aframes.childNodes.length > 2) {
-        setTimeout(function () {
-          updateSimBriefValue("type", aframes.childNodes[2].value);
-          triggerChange("type", "change");
-          updateSimBriefValue("reg", params.reg || "");
-        }, 2000);
+      btn.href = simbriefUrl;
+      btn.target = "_blank";
+      btn.className = "btn btn-default";
+      btn.style.marginLeft = "12px";
+      btn.innerHTML = `<img src="https://dispatch.simbrief.com/img/logo-papers.749a29af39b0.png" width="16" style="vertical-align:middle;margin-right:5px;">SimBrief Dispatch`;
+
+      actionsDiv.appendChild(btn);
+    }
+    var fuelRows = document.querySelectorAll('.myflight-aircraft--basic-info p');
+
+    fuelRows.forEach(function (row) {
+      var text = row.innerText.trim();
+
+      if (text.includes('gal')) {
+        var match = text.match(/(\d+)\s*gal/i);
+        if (match) {
+          var gallons = parseInt(match[1]);
+          var liters = Math.round(gallons * 3.78541);
+
+          var conversion = document.createElement('span');
+          conversion.style.marginLeft = '8px';
+          conversion.style.color = '#555';
+          conversion.style.fontSize = '0.95em';
+          conversion.innerHTML = `≈ <strong>${liters}L</strong>`;
+
+          row.appendChild(conversion);
+        }
       }
-    }, 5000);
+    });
   }
 })();
