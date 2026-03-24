@@ -1,11 +1,25 @@
 {
     "manifest_version": 3,
     "name": "FSE Plus",
-    "version": "0.3.0",
+    "version": "0.4.0",
     "description": "FS Economy Extended Features",
+    "icons": {
+      "16": "images/icon-16.png",
+      "32": "images/icon-32.png",
+      "48": "images/icon-48.png",
+      "128": "images/icon-128.png"
+    },
+    "action": {
+      "default_icon": {
+        "16": "images/icon-16.png",
+        "24": "images/icon-24.png",
+        "32": "images/icon-32.png"
+      },
+      "default_title": "FSE Plus"
+    },
     "content_scripts": [{
       "css": ["styles.css"],
       "js": ["content.js"],      
-      "matches": ["https://server.fseconomy.net/*","https://dispatch.simbrief.com/options/new*"]
+      "matches": ["https://server.fseconomy.net/*","https://dispatch.simbrief.com/options/custom*"]
     }]
   }
