@@ -543,18 +543,49 @@ function getAssignmentText(row, index) {
             oldPageBtn.style.display = "none";
         }
     }
-    var aircraft = document.querySelectorAll(".aircraftTable tbody tr");
-    aircraft.forEach(function (ac) {
-      var actext = ac.childNodes[3].innerText;
-      ac.childNodes[3].innerHTML =
-        "<a href='" +
-        aircraftImages[actext] +
-        "' target='_blank'><div class='ac-img' " +
-        (aircraftImages[actext]
-          ? "style='background-image:url(\"" + aircraftImages[actext] + "\");'"
-          : "") +
-        "></div></a>&nbsp;&nbsp;" +
-        actext;
+    var aircraftRows = document.querySelectorAll("#acTable tbody tr");
+
+    aircraftRows.forEach(function (row) {
+      var modelCell = row.cells[1];
+      if (!modelCell) return;
+
+      var modelName = modelCell.innerText.trim();
+      var imageUrl = aircraftImages[modelName];
+
+      if (imageUrl) {
+        var imgContainer = document.createElement("a");
+        imgContainer.href = imageUrl;
+        imgContainer.target = "_blank";
+        imgContainer.style.marginRight = "10px";
+        imgContainer.style.verticalAlign = "middle";
+        imgContainer.style.display = "inline-block";
+        imgContainer.style.transition = "transform 0.25s ease";
+
+        imgContainer.addEventListener("mouseenter", function () {
+          this.style.transform = "scale(2.2)";
+          this.style.zIndex = "100";
+        });
+
+        imgContainer.addEventListener("mouseleave", function () {
+          this.style.transform = "scale(1)";
+          this.style.zIndex = "1";
+        });
+
+        var thumb = document.createElement("img");
+        thumb.src = imageUrl;
+        thumb.style.height = "34px";
+        thumb.style.width = "auto";
+        thumb.style.borderRadius = "4px";
+        thumb.style.border = "1px solid #ccc";
+        thumb.style.boxShadow = "0 1px 3px rgba(0,0,0,0.2)";
+
+        imgContainer.appendChild(thumb);
+
+        modelCell.style.display = "flex";
+        modelCell.style.alignItems = "center";
+
+        modelCell.insertBefore(imgContainer, modelCell.firstChild);
+      }
     });
   } else if (page.indexOf("myflight.jsp") === 0) {
     var actions = document.querySelector(".assignments-actions");
